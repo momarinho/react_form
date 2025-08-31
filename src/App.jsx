@@ -8,7 +8,6 @@ const ItemForm = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [errors, setErrors] = useState({});
-  // Adicionar novos estados
   const [isSubmitting, setIsSubmitting] = useState(false);
   const [submitStatus, setSubmitStatus] = useState({ success: false, message: "" });
 
@@ -25,7 +24,11 @@ const ItemForm = () => {
   }, []);
 
   if (isLoading) {
-    return <div>Carregando...</div>;
+    return (
+      <div className="flex justify-center items-center h-64">
+        <div className="animate-spin rounded-full h-12 w-12 border-t-2 border-b-2 border-blue-500" />
+      </div>
+    );
   }
 
   const validateField = (name, value) => {
@@ -75,7 +78,6 @@ const ItemForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  // Atualizar o handleSubmit
   const handleSubmit = async (e) => {
     e.preventDefault();
 
