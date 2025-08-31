@@ -1,8 +1,8 @@
 {
   "items": [],
   "default-data": {
-    "title": "Produto Exemplo",
-    "description": "Esta é uma descrição de exemplo.",
-    "price": "19.99"
+    "title": "",
+    "description": "",
+    "price": ""
   }
 }
