@@ -1,4 +1,4 @@
-import { useState } from "react";
+import { useState, useEffect } from "react";
 
 const ItemForm = () => {
   const [formData, setFormData] = useState({
@@ -6,7 +6,24 @@ const ItemForm = () => {
     description: "",
     price: "",
   });
+  const [isLoading, setIsLoading] = useState(true);
   const [errors, setErrors] = useState({});
+
+  useEffect(() => {
+    fetch('/api/default-data')
+      .then((res) => res.json())
+      .then((data) => {
+        setFormData(prev => ({ ...prev, ...data }));
+        setIsLoading(false);
+      })
+      .catch(() => {
+        setIsLoading(false); 
+      });
+  }, []);
+
+  if (isLoading) {
+    return <div>Carregando...</div>;
+  }
 
   const handleChange = (e) => {
     setFormData({
