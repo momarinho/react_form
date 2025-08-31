@@ -8,16 +8,19 @@ const ItemForm = () => {
   });
   const [isLoading, setIsLoading] = useState(true);
   const [errors, setErrors] = useState({});
+  // Adicionar novos estados
+  const [isSubmitting, setIsSubmitting] = useState(false);
+  const [submitStatus, setSubmitStatus] = useState({ success: false, message: "" });
 
   useEffect(() => {
-    fetch('/api/default-data')
+    fetch("/api/default-data")
       .then((res) => res.json())
       .then((data) => {
-        setFormData(prev => ({ ...prev, ...data }));
+        setFormData((prev) => ({ ...prev, ...data }));
         setIsLoading(false);
       })
       .catch(() => {
-        setIsLoading(false); 
+        setIsLoading(false);
       });
   }, []);
 
@@ -25,10 +28,35 @@ const ItemForm = () => {
     return <div>Carregando...</div>;
   }
 
+  const validateField = (name, value) => {
+    let error = "";
+
+    switch (name) {
+      case "title":
+        if (!value.trim()) error = "Título é obrigatório";
+        break;
+      case "price":
+        if (!value || Number(value) <= 0) error = "Preço deve ser maior que 0";
+        break;
+      default:
+        break;
+    }
+
+    return error;
+  };
+
   const handleChange = (e) => {
+    const { name, value } = e.target;
     setFormData({
       ...formData,
-      [e.target.name]: e.target.value,
+      [name]: value,
+    });
+
+    // Validação em tempo real
+    const error = validateField(name, value);
+    setErrors({
+      ...errors,
+      [name]: error,
     });
   };
 
@@ -47,17 +75,58 @@ const ItemForm = () => {
     return Object.keys(newErrors).length === 0;
   };
 
-  const handleSubmit = (e) => {
+  // Atualizar o handleSubmit
+  const handleSubmit = async (e) => {
     e.preventDefault();
-    if (validateForm()) {
-      // Processar dados
+
+    if (!validateForm()) return;
+
+    setIsSubmitting(true);
+    try {
+      const response = await fetch('/api/items', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify(formData),
+      });
+
+      if (!response.ok) throw new Error("Erro na requisição");
+
+      setSubmitStatus({
+        success: true,
+        message: "Item salvo com sucesso!"
+      });
+
+      // Resetar formulário se necessário
+      // setFormData({ title: "", description: "", price: "" });
+    } catch {
+      setSubmitStatus({ 
+        success: false,
+        message: "Erro ao salvar item. Tente novamente."
+      });
+    } finally {
+      setIsSubmitting(false);
     }
   };
 
   return (
-    <form onSubmit={handleSubmit} className="max-w-lg mx-auto p-4 bg-white shadow-md rounded-lg">
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
+    <form
+      onSubmit={handleSubmit}
+      className="max-w-lg mx-auto p-6 bg-white shadow-lg rounded-xl space-y-6"
+    >
+      {/* Mensagem de status do submit */}
+      {submitStatus.message && (
+        <div className={`p-3 rounded-lg ${
+          submitStatus.success ? 'bg-green-100 text-green-700' : 'bg-red-100 text-red-700'
+        }`}>
+          {submitStatus.message}
+        </div>
+      )}
+
+      {/* Campo Título */}
+      <div>
+        <label className="block text-gray-700 text-sm font-semibold mb-2">
           Título *
         </label>
         <input
@@ -65,27 +134,31 @@ const ItemForm = () => {
           name="title"
           value={formData.title}
           onChange={handleChange}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-4 py-3 rounded-lg border ${
+            errors.title ? "border-red-500" : "border-gray-300"
+          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
         />
         {errors.title && (
-          <p className="text-red-500 text-xs italic mt-1">{errors.title}</p>
+          <p className="text-red-500 text-xs italic mt-2">{errors.title}</p>
         )}
       </div>
 
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
+      {/* Campo Descrição */}
+      <div>
+        <label className="block text-gray-700 text-sm font-semibold mb-2">
           Descrição
         </label>
         <textarea
           name="description"
           value={formData.description}
           onChange={handleChange}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className="w-full px-4 py-3 rounded-lg border border-gray-300 focus:outline-none focus:ring-2 focus:ring-blue-500"
         />
       </div>
 
-      <div className="mb-4">
-        <label className="block text-gray-700 text-sm font-bold mb-2">
+      {/* Campo Preço */}
+      <div>
+        <label className="block text-gray-700 text-sm font-semibold mb-2">
           Preço *
         </label>
         <input
@@ -93,18 +166,23 @@ const ItemForm = () => {
           name="price"
           value={formData.price}
           onChange={handleChange}
-          className="w-full px-3 py-2 border rounded-lg focus:outline-none focus:ring-2 focus:ring-blue-500"
+          className={`w-full px-4 py-3 rounded-lg border ${
+            errors.price ? "border-red-500" : "border-gray-300"
+          } focus:outline-none focus:ring-2 focus:ring-blue-500`}
         />
         {errors.price && (
-          <p className="text-red-500 text-xs italic mt-1">{errors.price}</p>
+          <p className="text-red-500 text-xs italic mt-2">{errors.price}</p>
         )}
       </div>
 
       <button
         type="submit"
-        className="w-full bg-blue-500 hover:bg-blue-700 text-white font-bold py-2 px-4 rounded-lg"
+        disabled={isSubmitting}
+        className={`w-full bg-blue-600 hover:bg-blue-700 text-white font-bold py-3 px-4 rounded-lg transition duration-200 ${
+          isSubmitting ? "opacity-50 cursor-not-allowed" : ""
+        }`}
       >
-        Enviar
+        {isSubmitting ? "Enviando..." : "Enviar"}
       </button>
     </form>
   );
