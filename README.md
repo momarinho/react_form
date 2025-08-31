@@ -67,3 +67,4 @@ npm run dev
 - React
 - Vite
 - JavaScript
+- Tailwind
